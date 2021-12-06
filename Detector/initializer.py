@@ -21,3 +21,8 @@ with open('Detector/tokenizer.json') as f:
     tokenizer = tokenizer_from_json(data) #load tokenizer
 
 stop_words = set(stopwords.words("english"))
+
+
+import pandas as pd
+df = pd.read_csv("Detector/Hinglish_Profanity_List.csv")
+bad_words = dict(zip(df.Hinglish,df.English))

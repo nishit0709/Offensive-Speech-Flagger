@@ -20,7 +20,17 @@ def regexCleaning(text):
   else:
     pass
 
+def translate(sentence):
+  translated_sent = ""
+  for word in sentence:
+    if word in ini.bad_words.keys:
+      translated_sent += ini.bad_words[word]
+    else:
+      translated_sent += word
+  return translated_sent
+
 def check_tweet(sentence):
+  sentence = translate(sentence)
   sentence = [regexCleaning(sentence)]
   if(None in sentence):
     return "Non Offensive"
