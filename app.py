@@ -66,7 +66,6 @@ def create(user):
         if request.method == 'POST':
             result = request.form  # Get the data submitted
             caption = result["caption"]
-            print(caption)
             k = offenceDetector.check_tweet(caption)
             print(k)
 
