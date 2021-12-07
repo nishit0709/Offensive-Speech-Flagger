@@ -61,6 +61,7 @@ def create(user):
         if request.method == 'POST':
             result = request.form  # Get the data submitted
             caption = result["caption"]
+            print(caption)
             k=offenceDetector.check_tweet(caption)
             print(k)
 
@@ -105,6 +106,7 @@ def welcome(user):
     for f in os.listdir('uploads'):
         if f.endswith('.jpg'):
             os.remove(os.path.join('uploads', f))
+    
     filename=""
     path_local=""
     person["is_logged_in"] == True
@@ -114,17 +116,10 @@ def welcome(user):
         users_ref = fb.collection(u'users').document(user)
         profile_url = storage.child("avtars/" + user + ".jpg").get_url(None)
         doc = doc_ref.get()
-        # name = u'{}'.format(doc.to_dict()['name'])
-        # email=u'{}'.format(doc.to_dict()['email'])
-        # profile=u'{}'.format(doc.to_dict()['profile_url'])
-        # form = UploadForm()
 
         if request.method == 'POST':
-                # check if the post request has the file part
 
             file = request.files['file']
-                # If the user does not select a file, the browser submits an
-                # empty file without a filename.
             if file.filename == '':
                 flash('No selected file')
                 return redirect(request.url)

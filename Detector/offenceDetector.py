@@ -6,8 +6,6 @@ import preprocessor as p
 from keras.preprocessing.sequence import pad_sequences
 from Detector import initializer as ini
 
-
-
 def regexCleaning(text):
   text = p.clean(text)
   text = re.sub('[^a-zA-Z]| {2,}',' ',text)
@@ -22,11 +20,11 @@ def regexCleaning(text):
 
 def translate(sentence):
   translated_sent = ""
-  for word in sentence:
-    if word in ini.bad_words.keys:
+  for word in sentence.split():
+    if word in ini.bad_words.keys():
       translated_sent += ini.bad_words[word]
     else:
-      translated_sent += word
+      translated_sent += word +" "
   return translated_sent
 
 def check_tweet(sentence):
