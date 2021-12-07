@@ -1,12 +1,13 @@
 import logging, os, pyrebase, firebase_admin
-from flask import Flask, flash, redirect, render_template,request, session, make_response, abort, url_for
+from flask import Flask, flash, redirect, render_template, request, session, make_response, abort, url_for
 from werkzeug.utils import secure_filename
 from firebase_admin import credentials
 from firebase_admin import firestore
 from Detector import offenceDetector
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-app = Flask(__name__)       #Initialze flask constructor
+app = Flask(__name__)  # Initialze flask constructor
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 config = {
@@ -19,7 +20,7 @@ config = {
     "appId": "1:302872635993:web:79303d88558b920be05f48"
 }
 
-#initialize firebase
+# initialize firebase
 firebase = pyrebase.initialize_app(config)
 storage = firebase.storage()
 auth = firebase.auth()
@@ -31,38 +32,42 @@ fb = firestore.client()
 app.config['SECRET_KEY'] = '565656'
 
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
-app.config['UPLOADED_PHOTOS_DEST'] = os.path.join(basedir, 'uploads') # you'll need to create a folder named uploads
-person = {"is_logged_in": False, "name": "", "email": "", "uid": "","profile_url":""}
+app.config['UPLOADED_PHOTOS_DEST'] = os.path.join(basedir, 'uploads')  # you'll need to create a folder named uploads
+person = {"is_logged_in": False, "name": "", "email": "", "uid": "", "profile_url": ""}
 
 from datetime import datetime
 
 now = datetime.now()
 app.secret_key = '565656'
 current_time = now.strftime("%H:%M:%S")
+
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/')
 
+@app.route('/')
 @app.route("/login")
 def login():
     return render_template("login.html")
 
-#Sign up/ Register
+
+# Sign up/ Register
 @app.route("/signup")
 def signup():
     return render_template("signup.html")
 
-@app.route("/create/<user>",methods=["POST","GET"])
+
+@app.route("/create/<user>", methods=["POST", "GET"])
 def create(user):
-    uid=user
+    uid = user
     try:
         if request.method == 'POST':
             result = request.form  # Get the data submitted
             caption = result["caption"]
             print(caption)
-            k=offenceDetector.check_tweet(caption)
+            k = offenceDetector.check_tweet(caption)
             print(k)
 
             # check if the post request has the file part
@@ -76,39 +81,38 @@ def create(user):
                 u'caption': caption,
                 u'timestamp': firestore.SERVER_TIMESTAMP,
                 u'user': uid,
-                u'tag':k
+                u'tag': k
 
-                })
+            })
             pub_ref.set({
 
                 u'caption': caption,
                 u'timestamp': firestore.SERVER_TIMESTAMP,
                 u'user': uid,
-                u'tag':k
+                u'tag': k
 
-                })
+            })
             success = True
         else:
             success = False
 
 
     except:
-        #If there is any error, redirect back to login
-        return redirect(url_for('welcome',_external=True,user=uid))
+        # If there is any error, redirect back to login
+        return redirect(url_for('welcome', _external=True, user=uid))
     return render_template("create.html", user=uid)
 
 
-#Welcome page
-@app.route("/welcome/<user>",methods=["POST","GET"])
+# Welcome page
+@app.route("/welcome/<user>", methods=["POST", "GET"])
 def welcome(user):
-    key=[]
+    key = []
 
     for f in os.listdir('uploads'):
         if f.endswith('.jpg'):
             os.remove(os.path.join('uploads', f))
-    
-    filename=""
-    path_local=""
+    filename = ""
+    path_local = ""
     person["is_logged_in"] == True
     if person["is_logged_in"] == True:
         doc_ref = fb.collection(u'users').document(user)
@@ -116,10 +120,17 @@ def welcome(user):
         users_ref = fb.collection(u'users').document(user)
         profile_url = storage.child("avtars/" + user + ".jpg").get_url(None)
         doc = doc_ref.get()
+        # name = u'{}'.format(doc.to_dict()['name'])
+        # email=u'{}'.format(doc.to_dict()['email'])
+        # profile=u'{}'.format(doc.to_dict()['profile_url'])
+        # form = UploadForm()
 
         if request.method == 'POST':
+            # check if the post request has the file part
 
             file = request.files['file']
+            # If the user does not select a file, the browser submits an
+            # empty file without a filename.
             if file.filename == '':
                 flash('No selected file')
                 return redirect(request.url)
@@ -136,14 +147,14 @@ def welcome(user):
 
                 })
 
-                os.remove(app.config['UPLOADED_PHOTOS_DEST']+"/"+ filename)
+                os.remove(app.config['UPLOADED_PHOTOS_DEST'] + "/" + filename)
                 success = True
 
             else:
                 success = False
         u = fb.collection(user)
         d = u.stream()
-        a,c,t,m=[],[],[],[]
+        a, c, t, m = [], [], [], []
 
         for doc in d:
             key.append(str(doc.id))
@@ -152,47 +163,48 @@ def welcome(user):
             m.append(u'{}'.format(doc.to_dict()['tag']))
 
         doc = doc_ref.get()
+        email = u'{}'.format(doc.to_dict()['email'])
         name = u'{}'.format(doc.to_dict()['name'])
-        email=u'{}'.format(doc.to_dict()['email'])
-        profile=u'{}'.format(doc.to_dict()['profile_url'])
-        print(name,email,profile)
-        return render_template("welcome.html", key=key,email = email, name = name,uid=user,file_url=profile,caption=c,timestamps=t,l=len(c),d=d,tag=m)
-    
+
+        profile = u'{}'.format(doc.to_dict()['profile_url'])
+        print(name, email, profile)
+        return render_template("welcome.html", key=key, email=email, name=name, uid=user, file_url=profile, caption=c,
+                               timestamps=t, l=len(c), d=d, tag=m)
+
     else:
-        return redirect(url_for('login',_external=True))
+        return redirect(url_for('login', _external=True))
 
 
-#If someone clicks on login, they are redirected to /result
-@app.route("/result", methods = ["POST", "GET"])
+# If someone clicks on login, they are redirected to /result
+@app.route("/result", methods=["POST", "GET"])
 def result():
-    trigger=False
-    if request.method == "POST":        #Only if data has been posted
-        result = request.form           #Get the data
+    trigger = False
+    if request.method == "POST":  # Only if data has been posted
+        result = request.form  # Get the data
         email = result["email"]
         password = result["pass"]
         try:
-            #Try signing in the user with the given information
+            # Try signing in the user with the given information
             user = auth.sign_in_with_email_and_password(email, password)
             session['loggedin'] = True
             session['id'] = user['localId']
             session['username'] = email
-            #Insert the user data in the global person
+            # Insert the user data in the global person
             global person
             person["is_logged_in"] = True
-            return redirect(url_for('welcome',_external=True,user=user["localId"]))
+            return redirect(url_for('welcome', _external=True, user=user["localId"]))
         except:
-            #If there is any error, redirect back to login
-            return redirect(url_for('login',_external=True))
+            # If there is any error, redirect back to login
+            return redirect(url_for('login', _external=True))
 
 
-@app.route("/posts/<user>",methods=["POST","GET"])
+@app.route("/posts/<user>", methods=["POST", "GET"])
 def posts(user):
-    uid=user
+    uid = user
     u = fb.collection('posts')
     d = u.stream()
-    a,c,t,m = [],[],[],[]
-    key,usernames,user_emails,user_profiles=[],[],[],[]
-
+    a, c, t, m = [], [], [], []
+    key, usernames, user_emails, user_profiles = [], [], [], []
 
     for doc in d:
         key.append(str(doc.id))
@@ -209,45 +221,49 @@ def posts(user):
         user_emails.append(email)
         profile = u'{}'.format(user_doc.to_dict()['profile_url'])
         user_profiles.append(profile)
-    return render_template("posts.html",caption=c,timestamps=t,l=len(c),user=uid,usernames=usernames,user_emails=user_emails,user_profiles=user_profiles,key=key,tag=m)
+    return render_template("posts.html", caption=c, timestamps=t, l=len(c), user=uid, usernames=usernames,
+                           user_emails=user_emails, user_profiles=user_profiles, key=key, tag=m)
 
-#If someone clicks on register, they are redirected to /register
-@app.route("/register", methods = ["POST", "GET"])
+
+# If someone clicks on register, they are redirected to /register
+@app.route("/register", methods=["POST", "GET"])
 def register():
-    if request.method == "POST":        #Only listen to POST
-        result = request.form           #Get the data submitted
+    if request.method == "POST":  # Only listen to POST
+        result = request.form  # Get the data submitted
         email = result["email"]
         password = result["pass"]
         name = result["name"]
-        #Try creating the user account using the provided data
+        # Try creating the user account using the provided data
         auth.create_user_with_email_and_password(email, password)
-        #Login the user
+        # Login the user
         user = auth.sign_in_with_email_and_password(email, password)
-        #Add data to global person
+        # Add data to global person
         global person
         person["is_logged_in"] = True
         doc_ref = fb.collection(u'users').document(user["localId"])
         doc_ref.set({
             u'name': name,
-            u'email':email,
-            u'profile_url':''
+            u'email': email,
+            u'profile_url': ''
 
         })
-        #Go to welcome page
-        return redirect(url_for('welcome',_external=True,user=user["localId"]))
+        # Go to welcome page
+        return redirect(url_for('welcome', _external=True, user=user["localId"]))
     else:
-            #If there is any error, redirect to register
-        return redirect(url_for('register',_external=True))
+        # If there is any error, redirect to register
+        return redirect(url_for('register', _external=True))
 
-@app.route("/logout", methods = ["POST", "GET"])
+
+@app.route("/logout", methods=["POST", "GET"])
 def logout():
-    auth.current_user=None
+    auth.current_user = None
     person = {"is_logged_in": False, "name": "", "email": "", "uid": "", "profile_url": ""}
-    person["is_logged_in"]=False
+    person["is_logged_in"] = False
     session.pop('loggedin', None)
     session.pop('id', None)
     session.pop('username', None)
-    return redirect(url_for('login',_external=True))
+    return redirect(url_for('login', _external=True))
+
 
 if __name__ == '__main__':
     app.run(debug=True)

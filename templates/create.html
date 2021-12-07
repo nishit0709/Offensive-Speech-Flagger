@@ -8,6 +8,11 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
     <title>Create Post</title>
     <style>
+        .content {
+  max-width: 500px;
+  margin: auto;
+            padding-top: 16%;
+}
       body{ 
         background:linear-gradient(-45deg, #000000, #5b5b5c,  #000000,#404040);
         background-size: 400% 400%;
@@ -28,7 +33,7 @@
     </style>
 
 </head>
-<body>
+
 <nav class="navbar navbar-expand-lg navbar-dark">
 {#  <a class="navbar-brand" href="{{ url_for('posts',user=user) }}">PhotoSoc</a>#}
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,6 +44,9 @@
     <ul class="navbar-nav mr-auto">
       <li class="nav-item active">
         <a class="nav-link" href="{{ url_for('welcome',user=user) }}">PROFILE<span class="sr-only">(current)</span></a>
+      </li>
+                     <li class="nav-item">
+        <a class="nav-link" href={{ url_for('posts',user=user) }}>POSTS</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href={{ url_for('create',user=user) }}>CREATE POSTS</a>
@@ -53,16 +61,20 @@
   </div>
 </nav>
 
-
+<body>
+<div class="content">
   <form method="POST" enctype="multipart/form-data">
-    <input style="color: #cccccc" type="text" id="caption" class="fadeIn second" name="caption" placeholder="Caption" >
+      <label style="font-weight: bolder;font-size: larger;color: #cccccc">Type Tweet here</label>
+      <input type="text" id="caption" class="fadeIn second" name="caption" placeholder="Caption" size="90">
     <br>
-    <input style="color: #cccccc" type=submit value=Upload required>
+      <br>
+      <br>
+    <input  type=submit value=Upload required>
   </form>
   {% if success %}
   <br>
   <p>Upload Success!</p>
   {% endif %}
-
+</div>
 </body>
 </html>
